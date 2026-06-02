@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artefactik0 — Управление задачами</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <style>
+        :root {
+            --bone: #F1E4D1;
+            --powder: #D0E6FD;
+            --royal: #162660;
+            --accent: #2B4B8F;
+            --shadow: 0 8px 32px rgba(22, 38, 96, 0.12);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'IBM Plex Mono', monospace;
+            background-color: var(--bone);
+            color: var(--royal);
+            overflow-x: hidden;
+        }
+        .parallax-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(45deg, var(--powder) 0%, var(--bone) 50%, #ffffff 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 20s ease infinite;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .mac-header {
+            position: sticky; top: 0; z-index: 1000;
+            background: rgba(241, 228, 209, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--royal);
+            padding: 12px 20px;
+            display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .window-dots { display: flex; gap: 8px; }
+        .dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 1.5px solid var(--royal);
+            transition: transform 0.2s;
+        }
+        .dot.red { background: #FF5F57; }
+        .dot.yellow { background: #FFBD2E; }
+        .dot.green { background: #28C840; }
+        .dot:hover { transform: scale(1.3); }
+        .header-title {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 1.2rem; letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--royal), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-left: 20px;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 30px 20px; }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px; margin-bottom: 30px;
+        }
+        .tab-btn {
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(8px);
+            border: 2px solid var(--royal);
+            border-radius: 24px;
+            padding: 12px 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600; font-size: 0.85rem;
+            color: var(--royal); cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .tab-btn:hover {
+            background: var(--powder);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(22,38,96,0.15);
+        }
+        .tab-btn.active {
+            background: var(--royal); color: white;
+            border-color: var(--royal);
+            box-shadow: 0 8px 20px rgba(22,38,96,0.3);
+        }
+        .window-card {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            border: 2px solid var(--royal);
+            border-radius: 28px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.4s ease, opacity 0.6s ease;
+            opacity: 0; transform: translateY(30px);
+        }
+        .window-card.visible { opacity: 1; transform: translateY(0); }
+        .card-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 20px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.8rem; color: var(--accent);
+        }
+        input, textarea, select {
+            width: 100%; padding: 12px 16px; margin: 8px 0 16px;
+            background: rgba(255,255,255,0.8);
+            border: 2px solid var(--royal);
+            border-radius: 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem; color: var(--royal);
+            outline: none; transition: all 0.2s;
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(22,38,96,0.1);
+        }
+        button {
+            background: var(--royal); color: white;
+            border: none; padding: 12px 28px;
+            border-radius: 30px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 600; font-size: 0.9rem;
+            cursor: pointer; transition: all 0.2s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: var(--accent);
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(22,38,96,0.3);
+        }
+        button:active { transform: scale(0.97); }
+        .fade-up {
+            opacity: 0; transform: translateY(40px);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+        }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+        .code-area {
+            font-family: 'IBM Plex Mono', monospace;
+            background: var(--royal);
+            color: #a8d4ff;
+            border: 2px solid var(--royal);
+            border-radius: 16px;
+            padding: 14px;
+            width: 100%;
+            resize: vertical;
+            min-height: 180px;
+        }
+        .code-area::placeholder { color: #3a5080; }
+        @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: repeat(2, 1fr); }
+            .header-title { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="parallax-bg"></div>
+
+<header class="mac-header">
+    <div class="window-dots">
+        <div class="dot red"></div>
+        <div class="dot yellow"></div>
+        <div class="dot green"></div>
+    </div>
+    <span class="header-title">Artefactik0</span>
+</header>
+
+<div class="container">
+    <div class="bento-grid" id="tabContainer">
+        <button class="tab-btn active" data-tab="create">Создать задачу</button>
+        <button class="tab-btn" data-tab="view">Просмотр задачи</button>
+        <button class="tab-btn" data-tab="tests">Все тесты</button>
+        <button class="tab-btn" data-tab="statement">Условие</button>
+        <button class="tab-btn" data-tab="update">Обновить output</button>
+    </div>
+
+    <!-- Вкладка "Создать задачу" (обновлённая) -->
+    <section class="window-card visible" id="tab-create">
+        <div class="card-header">📝 Новая задача</div>
+        <form id="createForm">
+            <input type="text" name="name" placeholder="Название задачи" required>
+            <input type="number" name="timeLimit" placeholder="Лимит времени (мс)" value="1000">
+            <input type="number" name="memoryLimit" placeholder="Лимит памяти (МБ)" value="256">
+            <textarea name="statement" rows="4" placeholder="Условие (Markdown)"></textarea>
+
+            <label class="fl" style="font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.7;">
+                Java-код генератора (реализует TestGenerator)
+            </label>
+            <textarea id="generatorCode" class="code-area" placeholder="public class MyGen implements ru.codzilla.artefactik.artefactik0.generator.TestGenerator { ... }"></textarea>
+
+            <label class="fl" style="font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.7; margin-top:12px;">
+                Входные данные (каждый input с новой строки)
+            </label>
+            <textarea id="rawInputs" rows="6" placeholder="1 2\n3 4\n5 6\nhello world"></textarea>
+            <button type="button" onclick="parseInputs()" style="background:var(--powder); color:var(--royal); border:2px solid var(--royal); margin-top:0;">
+                🔍 Разобрать тесты
+            </button>
+            <div id="testPreview" style="margin:16px 0; font-size:0.8rem; background:rgba(255,255,255,0.6); padding:12px; border-radius:16px;">
+                <em>Нажми «Разобрать тесты» для предпросмотра</em>
+            </div>
+            <div id="createResult" style="margin-top:16px;"></div>
+            <button type="submit">Создать задачу</button>
+        </form>
+    </section>
+
+    <!-- Остальные вкладки без изменений -->
+    <section class="window-card" id="tab-view" style="display:none;">
+        <div class="card-header">🔍 Информация о задаче</div>
+        <input type="number" id="viewProblemId" placeholder="ID задачи" style="width:200px;">
+        <button onclick="loadProblem()">Загрузить</button>
+        <div id="problemInfo" style="margin-top:16px;"></div>
+    </section>
+
+    <section class="window-card" id="tab-tests" style="display:none;">
+        <div class="card-header">🧪 Тесты задачи</div>
+        <input type="number" id="testsProblemId" placeholder="ID задачи" style="width:200px;">
+        <button onclick="loadTests()">Загрузить тесты</button>
+        <div id="testsContent" style="margin-top:16px;"></div>
+    </section>
+
+    <section class="window-card" id="tab-statement" style="display:none;">
+        <div class="card-header">📄 Условие (Markdown)</div>
+        <input type="number" id="statementProblemId" placeholder="ID задачи" style="width:200px;">
+        <button onclick="loadStatement()">Загрузить</button>
+        <div id="statementContent" style="margin-top:16px; white-space: pre-wrap;"></div>
+    </section>
+
+    <section class="window-card" id="tab-update" style="display:none;">
+        <div class="card-header">✏️ Обновить выходные данные теста</div>
+        <input type="number" id="updateProblemId" placeholder="ID задачи" style="width:200px;">
+        <input type="number" id="updateTestIndex" placeholder="Индекс теста" style="width:200px;">
+        <textarea id="updateOutput" rows="3" placeholder="Новый output"></textarea>
+        <button onclick="updateOutput()">Обновить</button>
+        <div id="updateResult" style="margin-top:16px;"></div>
+    </section>
+</div>
+
+<script>
+    // Переключение вкладок
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = {
+        create: document.getElementById('tab-create'),
+        view: document.getElementById('tab-view'),
+        tests: document.getElementById('tab-tests'),
+        statement: document.getElementById('tab-statement'),
+        update: document.getElementById('tab-update')
+    };
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabs.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            for (let key in sections) {
+                sections[key].style.display = key === tab ? 'block' : 'none';
+            }
+            const activeSection = sections[tab];
+            if (activeSection) {
+                activeSection.classList.remove('visible');
+                void activeSection.offsetWidth;
+                activeSection.classList.add('visible');
+            }
+        });
+    });
+
+    // Глобальная переменная для хранения разобранных тестов
+    let parsedInputs = [];
+
+    function parseInputs() {
+        const raw = document.getElementById('rawInputs').value.trim();
+        if (!raw) {
+            document.getElementById('testPreview').innerHTML = '<span style="color:#FF5F57;">Введите хотя бы один input</span>';
+            parsedInputs = [];
+            return;
+        }
+        const inputs = raw.split('\n')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+        if (inputs.length === 0) {
+            document.getElementById('testPreview').innerHTML = '<span style="color:#FF5F57;">Не найдено ни одного input</span>';
+            parsedInputs = [];
+            return;
+        }
+        parsedInputs = inputs;
+        const previewList = inputs.map((inp, i) => `<div>📥 Тест ${i+1}: <strong>${escapeHtml(inp)}</strong></div>`).join('');
+        document.getElementById('testPreview').innerHTML = `
+            <div style="color:var(--royal);">✅ Будет создано <strong>${inputs.length}</strong> тестов:</div>
+            <div style="margin-top:8px;">${previewList}</div>
+        `;
+    }
+
+    // Создание задачи с генератором
+    document.getElementById('createForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const name = form.name.value.trim();
+        if (!name) { alert('Введите название'); return; }
+
+        const generatorCode = document.getElementById('generatorCode').value.trim();
+        if (!generatorCode) { alert('Введите код генератора'); return; }
+
+        // Разбираем input'ы, если не нажимали кнопку
+        if (parsedInputs.length === 0) {
+            parseInputs();
+            if (parsedInputs.length === 0) {
+                alert('Введите хотя бы один input');
+                return;
+            }
+        }
+
+        const timeLimit = parseInt(form.timeLimit.value) || 1000;
+        const memoryLimit = parseInt(form.memoryLimit.value) || 256;
+        const statement = form.statement.value;
+
+        const body = {
+            name,
+            timeLimit,
+            memoryLimit,
+            statement,
+            generatorCode,
+            inputs: parsedInputs
+        };
+
+        try {
+            const res = await fetch('/api/problems', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Ошибка сервера');
+            }
+            const data = await res.json();
+            document.getElementById('createResult').innerHTML = `
+                <div style="background:var(--powder); padding:16px; border-radius:20px;">
+                    ✅ Задача создана! ID: <strong>${data.id}</strong>, тестов: <strong>${data.testCount}</strong>
+                </div>`;
+            // Сброс
+            document.getElementById('generatorCode').value = '';
+            document.getElementById('rawInputs').value = '';
+            parsedInputs = [];
+            document.getElementById('testPreview').innerHTML = '<em>Нажми «Разобрать тесты» для предпросмотра</em>';
+        } catch (err) {
+            document.getElementById('createResult').innerHTML = `
+                <div style="color:#FF5F57;">❌ ${err.message}</div>`;
+        }
+    });
+
+    // Остальные функции (просмотр, тесты, statement, обновление) без изменений
+    async function loadProblem() {
+        const id = document.getElementById('viewProblemId').value;
+        if (!id) return;
+        try {
+            const res = await fetch(`/api/problems/${id}`);
+            const p = await res.json();
+            document.getElementById('problemInfo').innerHTML = `
+                <h3>${p.name}</h3>
+                <p>🕒 Лимит времени: ${p.timeLimit} мс</p>
+                <p>💾 Лимит памяти: ${p.memoryLimit} МБ</p>
+                <p>📄 Наличие условия: ${p.hasStatement ? 'Да' : 'Нет'}</p>
+                <p>🧪 Количество тестов: ${p.testCount}</p>
+                <p>📅 Создано: ${p.createdAt}</p>
+            `;
+        } catch (err) {
+            document.getElementById('problemInfo').innerText = 'Ошибка загрузки';
+        }
+    }
+
+    async function loadTests() {
+        const id = document.getElementById('testsProblemId').value;
+        if (!id) return;
+        try {
+            const res = await fetch(`/api/problems/${id}/tests`);
+            const tests = await res.json();
+            let html = '';
+            tests.forEach(t => {
+                html += `
+                <div style="background:var(--powder); padding:12px; border-radius:16px; margin-bottom:12px;">
+                    <strong>Тест ${t.testIndex}</strong><br>
+                    <pre>Input: ${escapeHtml(t.input)}</pre>
+                    <pre>Output: ${escapeHtml(t.output)}</pre>
+                </div>`;
+            });
+            document.getElementById('testsContent').innerHTML = html || 'Нет тестов';
+        } catch (err) {
+            document.getElementById('testsContent').innerText = 'Ошибка загрузки';
+        }
+    }
+
+    async function loadStatement() {
+        const id = document.getElementById('statementProblemId').value;
+        if (!id) return;
+        const container = document.getElementById('statementContent');
+        container.innerHTML = '<em>Загрузка...</em>';
+        try {
+            const res = await fetch(`/api/problems/${id}/statement`);
+            const md = await res.text();
+
+            // Конфигурируем marked для поддержки рендера формул KaTeX
+            marked.setOptions({
+                breaks: true,
+                gfm: true
+            });
+
+            // Сначала рендерим Markdown в HTML
+            let html = marked.parse(md);
+
+            // Показываем HTML
+            container.innerHTML = html;
+
+            // Затем рендерим все формулы KaTeX внутри контейнера
+            renderMathInElement(container, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        } catch (err) {
+            container.innerText = 'Ошибка загрузки';
+        }
+    }
+    async function updateOutput() {
+        const problemId = document.getElementById('updateProblemId').value;
+        const testIndex = document.getElementById('updateTestIndex').value;
+        const output = document.getElementById('updateOutput').value;
+        if (!problemId || !testIndex) return;
+        try {
+            const res = await fetch(`/api/problems/${problemId}/tests/${testIndex}/output`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'text/plain'},
+                body: output
+            });
+            if (res.ok) {
+                document.getElementById('updateResult').innerHTML = '✅ Output обновлён';
+            } else {
+                document.getElementById('updateResult').innerHTML = '❌ Ошибка обновления';
+            }
+        } catch (err) {
+            document.getElementById('updateResult').innerText = 'Ошибка: ' + err.message;
+        }
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    // Анимация при скролле
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.window-card, .fade-up').forEach(el => observer.observe(el));
+
+    window.addEventListener('load', () => {
+        document.querySelectorAll('.window-card').forEach(card => {
+            if (card.style.display !== 'none') card.classList.add('visible');
+        });
+    });
+</script>
+</body>
+</html>
