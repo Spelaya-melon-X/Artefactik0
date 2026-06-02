@@ -1,17 +1,14 @@
 package ru.codzilla.artefactik.artefactik0.generator;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import ru.codzilla.artefactik.artefactik0.service.GeneratorService;
 
 import static org.assertj.core.api.Assertions.*;
 
-@SpringBootTest
+
 class GeneratorServiceTest {
 
-    @Autowired
-    private GeneratorService generatorService;
+    private final GeneratorService generatorService = new GeneratorService();
 
     @Test
     void shouldExecuteSimpleGenerator() {
@@ -23,7 +20,6 @@ class GeneratorServiceTest {
                 "        return String.valueOf(a + b);\n" +
                 "    }\n" +
                 "}";
-
         String result = generatorService.executeGenerator(code, "5 7");
         assertThat(result).isEqualTo("12");
     }
@@ -45,6 +41,6 @@ class GeneratorServiceTest {
                 "}";
         assertThatThrownBy(() -> generatorService.executeGenerator(code, "anything"))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Ошибка выполнения генератора"); // поправили сообщение
+                .hasMessageContaining("Ошибка выполнения генератора");
     }
 }
