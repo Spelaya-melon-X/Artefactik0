@@ -13,6 +13,19 @@
 
 ---
 
+## 🖼️ Скриншоты
+
+*Здесь будут скриншоты интерфейса: создание задачи, просмотр тестов, условие с Markdown и формулами.*
+#### Создание задач
+![ready_create_task.png](photo/ready_create_task.png)
+#### Просмотр параметров задачи
+![task.png](photo/task.png)
+#### Сгенерированные тесты под задачу
+![all_tests.png](photo/all_tests.png)
+#### md конвертор условия
+![md.png](photo/md.png)
+---
+
 ## 📡 API Endpoints
 
 Все ручки доступны по адресу `http://localhost:8081/api/problems`
@@ -88,18 +101,6 @@ UI доступен по адресу `http://localhost:8081`.
 
 ---
 
-## 🖼️ Скриншоты
-
-*Здесь будут скриншоты интерфейса: создание задачи, просмотр тестов, условие с Markdown и формулами.*
-#### Создание задач
-![ready_create_task.png](photo/ready_create_task.png)
-#### Просмотр параметров задачи
-![task.png](photo/task.png)
-#### Сгенерированные тесты под задачу
-![all_tests.png](photo/all_tests.png)
-#### md конвертор условия
-![md.png](photo/md.png)
----
 
 ## 🧪 Запуск тестов
 
