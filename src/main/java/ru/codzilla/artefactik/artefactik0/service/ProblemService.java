@@ -32,12 +32,10 @@ public class ProblemService {
         Problem saved = problemRepository.save(problem);
         Long problemId = saved.getId();
 
-        // Сохраняем код генератора в MinIO
         String genKey = MinioStorageService.generatorKey(problemId);
         storageService.save(genKey, request.getGeneratorCode());
         saved.setGeneratorKey(genKey);
 
-        // Statement
         if (request.getStatement() != null && !request.getStatement().isBlank()) {
             String stmtKey = MinioStorageService.statementKey(problemId);
             storageService.save(stmtKey, request.getStatement());
@@ -45,7 +43,6 @@ public class ProblemService {
         }
         saved = problemRepository.save(saved);
 
-        // Генерация тестов (executeGenerator внутри сам компилирует при необходимости)
         List<String> inputs = request.getInputs();
         for (int i = 0; i < inputs.size(); i++) {
             String input = inputs.get(i);
