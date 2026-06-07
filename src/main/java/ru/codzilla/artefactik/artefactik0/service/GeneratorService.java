@@ -119,10 +119,29 @@ public class GeneratorService {
         Class<?> defineClass(String name, byte[] bytes) { return defineClass(name, bytes, 0, bytes.length); }
     }
     private String buildClasspath() {
-        // В Spring Boot fat jar всё лежит внутри /app/app.jar
-        // javac умеет читать обычные jar напрямую
-        String appJarPath = "/app/app.jar";
-        log.info("Compiler classpath: {}", appJarPath);
-        return appJarPath;
+        try {
+            // Распаковываем app.jar во временную папку чтобы javac мог читать классы
+            Path extractDir = Path.of("/tmp/artefactik-cp");
+            if (!Files.exists(extractDir)) {
+                Files.createDirectories(extractDir);
+                ProcessBuilder pb = new ProcessBuilder(
+                        "jar", "xf", "/app/app.jar"
+                );
+                pb.directory(extractDir.toFile());
+                pb.inheritIO();
+                Process p = pb.start();
+                p.waitFor();
+            }
+
+            String bootInfClasses = extractDir + "/BOOT-INF/classes";
+            String bootInfLib = extractDir + "/BOOT-INF/lib/*";
+
+            String cp = bootInfClasses + File.pathSeparator + bootInfLib;
+            log.info("Compiler classpath: {}", cp);
+            return cp;
+        } catch (Exception e) {
+            log.error("Failed to build classpath: {}", e.getMessage());
+            return "/app/app.jar";
+        }
     }
 }
