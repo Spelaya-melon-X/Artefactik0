@@ -28,6 +28,7 @@ public class GeneratorService {
                 generator = compileAndInstantiate(javaSourceCode);
                 generatorCache.put(hash, generator);
             } catch (Exception e) {
+                log.error("Compilation failed: {}", e.getMessage(), e);  // ← добавь это
                 throw new RuntimeException("Ошибка компиляции генератора: " + e.getMessage(), e);
             }
         }
@@ -66,6 +67,7 @@ public class GeneratorService {
             for (Diagnostic<? extends JavaFileObject> d : diagnostics.getDiagnostics()) {
                 sb.append(d.getMessage(null)).append("\n");
             }
+            log.error("Diagnostics: {}", sb);  // ← добавь это
             throw new RuntimeException(sb.toString());
         }
 
