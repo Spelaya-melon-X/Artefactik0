@@ -1,11 +1,9 @@
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM gradle:8.12-jdk21 AS builder
 WORKDIR /app
-COPY gradlew ./
-COPY gradle/ gradle/
 COPY build.gradle settings.gradle ./
-RUN ./gradlew dependencies --no-daemon || true
+RUN gradle dependencies --no-daemon || true
 COPY src/ src/
-RUN ./gradlew build -x test --no-daemon
+RUN gradle build -x test --no-daemon
 
 FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
