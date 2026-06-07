@@ -117,41 +117,10 @@ public class GeneratorService {
         Class<?> defineClass(String name, byte[] bytes) { return defineClass(name, bytes, 0, bytes.length); }
     }
     private String buildClasspath() {
-        // В fat jar классы лежат в BOOT-INF/classes, либы в BOOT-INF/lib
-        // Пробуем найти реальный путь к app.jar
-        String jarPath = null;
-        try {
-            URI location = GeneratorService.class.getProtectionDomain()
-                    .getCodeSource().getLocation().toURI();
-            // location может быть внутри jar: jar:file:/app/app.jar!/BOOT-INF/classes/
-            String path = location.toString();
-            if (path.contains("!")) {
-                // Вытаскиваем путь до jar файла
-                jarPath = path.substring(path.indexOf("file:") + 5, path.indexOf("!"));
-            } else {
-                jarPath = location.getPath();
-            }
-        } catch (Exception e) {
-            log.warn("Cannot determine jar path: {}", e.getMessage());
-        }
-
-        StringBuilder cp = new StringBuilder();
-
-        // Добавляем системный classpath
-        String sysClasspath = System.getProperty("java.class.path");
-        if (sysClasspath != null && !sysClasspath.isBlank()) {
-            cp.append(sysClasspath);
-        }
-
-        // Добавляем сам app.jar если нашли
-        if (jarPath != null) {
-            cp.append(File.pathSeparator).append(jarPath);
-        }
-
-        // Добавляем /app/app.jar напрямую (знаем путь из Dockerfile)
-        cp.append(File.pathSeparator).append("/app/app.jar");
-
-        log.info("Compiler classpath: {}", cp);
-        return cp.toString();
+        // В Spring Boot fat jar всё лежит внутри /app/app.jar
+        // javac умеет читать обычные jar напрямую
+        String appJarPath = "/app/app.jar";
+        log.info("Compiler classpath: {}", appJarPath);
+        return appJarPath;
     }
 }
