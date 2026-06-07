@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import ru.codzilla.artefactik.artefactik0.generator.TestGenerator;
 
 import javax.tools.*;
+import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -52,7 +53,11 @@ public class GeneratorService {
         DiagnosticCollector<JavaFileObject> diagnostics = new DiagnosticCollector<>();
         StandardJavaFileManager stdFileManager = compiler.getStandardFileManager(diagnostics, null, null);
         JavaFileObject sourceFile = new JavaSourceFromString(className, javaSourceCode);
-        String classpath = System.getProperty("java.class.path");
+        String appJar = GeneratorService.class.getProtectionDomain()
+                .getCodeSource().getLocation().toURI().getPath();
+        String classpath = System.getProperty("java.class.path") +
+                File.pathSeparator + appJar;
+
         Iterable<String> options = List.of("-classpath", classpath);
         JavaCompiler.CompilationTask task = compiler.getTask(
                 null, stdFileManager, diagnostics,
