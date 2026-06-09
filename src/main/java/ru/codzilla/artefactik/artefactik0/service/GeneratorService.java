@@ -18,6 +18,7 @@ import java.util.regex.*;
 @Service
 public class GeneratorService {
     private final Map<String, TestGenerator> generatorCache = new HashMap<>();
+    private boolean testMode = false;
 
     public String executeGenerator(String javaSourceCode, String input) {
         String hash = sha256(javaSourceCode);
@@ -119,8 +120,13 @@ public class GeneratorService {
         Class<?> defineClass(String name, byte[] bytes) { return defineClass(name, bytes, 0, bytes.length); }
     }
     private String buildClasspath() {
+        if (testMode) {
+            String cp = System.getProperty("java.class.path");
+            log.info("Compiler classpath (test): {}", cp);
+            return cp;
+        }
+
         try {
-            // Распаковываем app.jar во временную папку чтобы javac мог читать классы
             Path extractDir = Path.of("/tmp/artefactik-cp");
             if (!Files.exists(extractDir)) {
                 Files.createDirectories(extractDir);
