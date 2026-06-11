@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.codzilla.artefactik.artefactik0.repository.Problem;
+import ru.codzilla.artefactik.artefactik0.repository.ProblemTestRepository;
 import ru.codzilla.artefactik.artefactik0.service.ProblemService;
 
 import java.util.List;
@@ -19,6 +21,7 @@ import java.util.List;
 public class ProblemController {
 
     private final ProblemService problemService;
+    private final ProblemTestRepository problemTestRepository;
 
 
     @PostMapping
@@ -52,5 +55,15 @@ public class ProblemController {
             @RequestBody String output) {
         problemService.updateTestOutput(id, testIndex, output);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public List<ProblemResponse> getProblemsByComplexity(
+            @RequestParam("complexity") Problem.TaskComplexity complexity) {
+        return problemService.getAllTaskWithComplexity(complexity)
+                .stream()
+                .map(p -> ProblemResponse.from(p,
+                        problemTestRepository.findAllByProblemIdOrderByTestIndex(p.getId()).size()))
+                .toList();
     }
 }

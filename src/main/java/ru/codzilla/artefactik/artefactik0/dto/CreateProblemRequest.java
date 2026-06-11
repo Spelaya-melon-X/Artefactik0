@@ -3,6 +3,7 @@ package ru.codzilla.artefactik.artefactik0.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import ru.codzilla.artefactik.artefactik0.repository.Problem;
 
 import java.util.List;
 
@@ -14,6 +15,8 @@ public class CreateProblemRequest {
 
     private Integer timeLimit = 1000;
     private Integer memoryLimit = 256;
+
+    private Problem.TaskComplexity complexity;
 
     private String statement;
 

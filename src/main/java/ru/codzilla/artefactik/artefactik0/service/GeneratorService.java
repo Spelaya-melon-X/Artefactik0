@@ -120,34 +120,31 @@ public class GeneratorService {
         Class<?> defineClass(String name, byte[] bytes) { return defineClass(name, bytes, 0, bytes.length); }
     }
     private String buildClasspath() {
-        if (testMode) {
-            String cp = System.getProperty("java.class.path");
-            log.info("Compiler classpath (test): {}", cp);
-            return cp;
-        }
 
-        try {
-            Path extractDir = Path.of("/tmp/artefactik-cp");
-            if (!Files.exists(extractDir)) {
-                Files.createDirectories(extractDir);
-                ProcessBuilder pb = new ProcessBuilder(
-                        "jar", "xf", "/app/app.jar"
-                );
-                pb.directory(extractDir.toFile());
-                pb.inheritIO();
-                Process p = pb.start();
-                p.waitFor();
+        Path appJar = Path.of("/app/app.jar");
+        if (Files.exists(appJar)) {
+            try {
+                Path extractDir = Path.of("/tmp/artefactik-cp");
+                if (!Files.exists(extractDir)) {
+                    Files.createDirectories(extractDir);
+                    ProcessBuilder pb = new ProcessBuilder("jar", "xf", "/app/app.jar");
+                    pb.directory(extractDir.toFile());
+                    pb.inheritIO();
+                    pb.start().waitFor();
+                }
+                String cp = extractDir + "/BOOT-INF/classes" +
+                        File.pathSeparator +
+                        extractDir + "/BOOT-INF/lib/*";
+                log.info("Compiler classpath (docker): {}", cp);
+                return cp;
+            } catch (Exception e) {
+                log.error("Failed to build docker classpath: {}", e.getMessage());
             }
-
-            String bootInfClasses = extractDir + "/BOOT-INF/classes";
-            String bootInfLib = extractDir + "/BOOT-INF/lib/*";
-
-            String cp = bootInfClasses + File.pathSeparator + bootInfLib;
-            log.info("Compiler classpath: {}", cp);
-            return cp;
-        } catch (Exception e) {
-            log.error("Failed to build classpath: {}", e.getMessage());
-            return "/app/app.jar";
         }
+
+
+        String cp = System.getProperty("java.class.path");
+        log.info("Compiler classpath (local): {}", cp);
+        return cp;
     }
 }

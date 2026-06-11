@@ -29,6 +29,7 @@ public class ProblemService {
         problem.setName(request.getName());
         problem.setTimeLimit(request.getTimeLimit() != null ? request.getTimeLimit() : 1000);
         problem.setMemoryLimit(request.getMemoryLimit() != null ? request.getMemoryLimit() : 256);
+        problem.setComplexity(request.getComplexity());
         Problem saved = problemRepository.save(problem);
         Long problemId = saved.getId();
 
@@ -95,6 +96,11 @@ public class ProblemService {
             throw new RuntimeException("No statement for problem: " + problemId);
         }
         return storageService.get(problem.getStatementKey());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Problem> getAllTaskWithComplexity(Problem.TaskComplexity complexity) {
+        return problemRepository.findAllByComplexity(complexity);
     }
 
     public void updateTestOutput(Long problemId, int testIndex, String output) {

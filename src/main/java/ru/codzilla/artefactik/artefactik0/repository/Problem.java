@@ -20,6 +20,10 @@ public class Problem {
     @Column(nullable = false)
     private Integer timeLimit;
 
+    @Enumerated(EnumType.STRING)
+    private TaskComplexity complexity;
+
+
     @Column(nullable = false)
     private Integer memoryLimit;
 
@@ -38,5 +42,9 @@ public class Problem {
     @PreUpdate
     public void onUpdate() {
         this.updatedAt = LocalDateTime.now();
+    }
+
+    public enum TaskComplexity {
+         EASY, MEDIUM, HARD
     }
 }

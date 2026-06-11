@@ -1,14 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Artefactik0 — Управление задачами</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
@@ -123,7 +121,7 @@
             outline: none; transition: all 0.2s;
             resize: vertical;
         }
-        input:focus, textarea:focus {
+        input:focus, textarea:focus, select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 4px rgba(22,38,96,0.1);
         }
@@ -159,6 +157,22 @@
             min-height: 180px;
         }
         .code-area::placeholder { color: #3a5080; }
+        /* Стили для таблицы задач */
+        .problem-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+        .problem-table td, .problem-table th {
+            padding: 12px;
+            text-align: left;
+            background: rgba(208, 230, 253, 0.4);
+            border-radius: 12px;
+        }
+        .problem-table th {
+            background: var(--royal);
+            color: white;
+        }
         @media (max-width: 768px) {
             .bento-grid { grid-template-columns: repeat(2, 1fr); }
             .header-title { font-size: 0.9rem; }
@@ -184,6 +198,8 @@
         <button class="tab-btn" data-tab="tests">Все тесты</button>
         <button class="tab-btn" data-tab="statement">Условие</button>
         <button class="tab-btn" data-tab="update">Обновить output</button>
+        <!-- Новая вкладка -->
+        <button class="tab-btn" data-tab="complexity">По сложности</button>
     </div>
 
     <!-- Вкладка "Создать задачу" (обновлённая) -->
@@ -193,6 +209,14 @@
             <input type="text" name="name" placeholder="Название задачи" required>
             <input type="number" name="timeLimit" placeholder="Лимит времени (мс)" value="1000">
             <input type="number" name="memoryLimit" placeholder="Лимит памяти (МБ)" value="256">
+
+            <!-- Новое поле сложности -->
+            <select name="complexity" required>
+                <option value="EASY">Лёгкая</option>
+                <option value="MEDIUM" selected>Средняя</option>
+                <option value="HARD">Сложная</option>
+            </select>
+
             <textarea name="statement" rows="4" placeholder="Условие (Markdown)"></textarea>
 
             <label class="fl" style="font-family:'IBM Plex Mono', monospace; font-size:0.7rem; letter-spacing:1.5px; text-transform:uppercase; opacity:0.7;">
@@ -215,7 +239,7 @@
         </form>
     </section>
 
-    <!-- Остальные вкладки без изменений -->
+    <!-- Остальные вкладки без изменений, кроме новой -->
     <section class="window-card" id="tab-view" style="display:none;">
         <div class="card-header">🔍 Информация о задаче</div>
         <input type="number" id="viewProblemId" placeholder="ID задачи" style="width:200px;">
@@ -245,6 +269,18 @@
         <button onclick="updateOutput()">Обновить</button>
         <div id="updateResult" style="margin-top:16px;"></div>
     </section>
+
+    <!-- НОВАЯ ВКЛАДКА "По сложности" -->
+    <section class="window-card" id="tab-complexity" style="display:none;">
+        <div class="card-header">🎯 Задачи по сложности</div>
+        <select id="complexitySelect">
+            <option value="EASY">Лёгкая</option>
+            <option value="MEDIUM" selected>Средняя</option>
+            <option value="HARD">Сложная</option>
+        </select>
+        <button onclick="loadByComplexity()">Показать задачи</button>
+        <div id="complexityList" style="margin-top:16px;"></div>
+    </section>
 </div>
 
 <script>
@@ -255,7 +291,8 @@
         view: document.getElementById('tab-view'),
         tests: document.getElementById('tab-tests'),
         statement: document.getElementById('tab-statement'),
-        update: document.getElementById('tab-update')
+        update: document.getElementById('tab-update'),
+        complexity: document.getElementById('tab-complexity') // новая вкладка
     };
     tabs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -300,7 +337,7 @@
         `;
     }
 
-    // Создание задачи с генератором
+    // Создание задачи с генератором (обновлено)
     document.getElementById('createForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -310,7 +347,8 @@
         const generatorCode = document.getElementById('generatorCode').value.trim();
         if (!generatorCode) { alert('Введите код генератора'); return; }
 
-        // Разбираем input'ы, если не нажимали кнопку
+        const complexity = form.complexity.value; // <-- новое поле
+
         if (parsedInputs.length === 0) {
             parseInputs();
             if (parsedInputs.length === 0) {
@@ -327,6 +365,7 @@
             name,
             timeLimit,
             memoryLimit,
+            complexity,     // <-- отправляем сложность
             statement,
             generatorCode,
             inputs: parsedInputs
@@ -347,7 +386,6 @@
                 <div style="background:var(--powder); padding:16px; border-radius:20px;">
                     ✅ Задача создана! ID: <strong>${data.id}</strong>, тестов: <strong>${data.testCount}</strong>
                 </div>`;
-            // Сброс
             document.getElementById('generatorCode').value = '';
             document.getElementById('rawInputs').value = '';
             parsedInputs = [];
@@ -358,7 +396,7 @@
         }
     });
 
-    // Остальные функции (просмотр, тесты, statement, обновление) без изменений
+    // Просмотр одной задачи (добавим отображение сложности, если есть)
     async function loadProblem() {
         const id = document.getElementById('viewProblemId').value;
         if (!id) return;
@@ -369,6 +407,7 @@
                 <h3>${p.name}</h3>
                 <p>🕒 Лимит времени: ${p.timeLimit} мс</p>
                 <p>💾 Лимит памяти: ${p.memoryLimit} МБ</p>
+                <p>🎯 Сложность: ${p.complexity || 'не указана'}</p>
                 <p>📄 Наличие условия: ${p.hasStatement ? 'Да' : 'Нет'}</p>
                 <p>🧪 Количество тестов: ${p.testCount}</p>
                 <p>📅 Создано: ${p.createdAt}</p>
@@ -378,6 +417,7 @@
         }
     }
 
+    // Загрузка тестов
     async function loadTests() {
         const id = document.getElementById('testsProblemId').value;
         if (!id) return;
@@ -399,6 +439,7 @@
         }
     }
 
+    // Загрузка условия
     async function loadStatement() {
         const id = document.getElementById('statementProblemId').value;
         if (!id) return;
@@ -407,20 +448,9 @@
         try {
             const res = await fetch(`/api/problems/${id}/statement`);
             const md = await res.text();
-
-            // Конфигурируем marked для поддержки рендера формул KaTeX
-            marked.setOptions({
-                breaks: true,
-                gfm: true
-            });
-
-            // Сначала рендерим Markdown в HTML
+            marked.setOptions({ breaks: true, gfm: true });
             let html = marked.parse(md);
-
-            // Показываем HTML
             container.innerHTML = html;
-
-            // Затем рендерим все формулы KaTeX внутри контейнера
             renderMathInElement(container, {
                 delimiters: [
                     {left: '$$', right: '$$', display: true},
@@ -434,6 +464,8 @@
             container.innerText = 'Ошибка загрузки';
         }
     }
+
+    // Обновление output
     async function updateOutput() {
         const problemId = document.getElementById('updateProblemId').value;
         const testIndex = document.getElementById('updateTestIndex').value;
@@ -452,6 +484,37 @@
             }
         } catch (err) {
             document.getElementById('updateResult').innerText = 'Ошибка: ' + err.message;
+        }
+    }
+
+    // НОВАЯ ФУНКЦИЯ: загрузка списка задач по сложности
+    async function loadByComplexity() {
+        const complexity = document.getElementById('complexitySelect').value;
+        const container = document.getElementById('complexityList');
+        container.innerHTML = '<em>Загрузка...</em>';
+        try {
+            const res = await fetch(`/api/problems?complexity=${complexity}`);
+            if (!res.ok) throw new Error('Ошибка сервера');
+            const problems = await res.json();
+            if (problems.length === 0) {
+                container.innerHTML = '<p>Нет задач с такой сложностью.</p>';
+                return;
+            }
+            let html = `<table class="problem-table">
+                <thead><tr><th>ID</th><th>Название</th><th>Лимит времени</th><th>Лимит памяти</th><th>Тестов</th></tr></thead><tbody>`;
+            problems.forEach(p => {
+                html += `<tr>
+                    <td>${p.id}</td>
+                    <td>${escapeHtml(p.name)}</td>
+                    <td>${p.timeLimit} мс</td>
+                    <td>${p.memoryLimit} МБ</td>
+                    <td>${p.testCount || '—'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<span style="color:#FF5F57;">Ошибка: ${err.message}</span>`;
         }
     }
 
