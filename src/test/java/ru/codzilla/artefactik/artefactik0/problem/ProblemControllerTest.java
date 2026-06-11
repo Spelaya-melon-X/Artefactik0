@@ -8,16 +8,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.codzilla.artefactik.artefactik0.controller.ProblemController;
 import ru.codzilla.artefactik.artefactik0.dto.CreateProblemRequest;
 import ru.codzilla.artefactik.artefactik0.dto.ProblemResponse;
 import ru.codzilla.artefactik.artefactik0.dto.TestCaseDTO;
-import ru.codzilla.artefactik.artefactik0.controller.ProblemController;
+import ru.codzilla.artefactik.artefactik0.repository.Problem;
+import ru.codzilla.artefactik.artefactik0.repository.ProblemTestRepository;
 import ru.codzilla.artefactik.artefactik0.service.ProblemService;
 
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -29,6 +31,7 @@ class ProblemControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper mapper;
     @MockBean private ProblemService problemService;
+    @MockBean private ProblemTestRepository problemTestRepository;   // ← добавлен мок
 
     @Test
     void shouldCreateProblem() throws Exception {
@@ -36,6 +39,7 @@ class ProblemControllerTest {
         request.setName("Sum");
         request.setGeneratorCode("class Gen implements TestGenerator {...}");
         request.setInputs(List.of("1 2", "3 4"));
+        request.setComplexity(Problem.TaskComplexity.MEDIUM); // ← добавлено поле
 
         ProblemResponse response = new ProblemResponse();
         response.setId(1L);
@@ -57,6 +61,7 @@ class ProblemControllerTest {
         CreateProblemRequest request = new CreateProblemRequest();
         request.setGeneratorCode("code");
         request.setInputs(List.of("1"));
+        request.setComplexity(Problem.TaskComplexity.MEDIUM);
 
         mockMvc.perform(post("/api/problems")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -70,6 +75,7 @@ class ProblemControllerTest {
         CreateProblemRequest request = new CreateProblemRequest();
         request.setName("Task");
         request.setInputs(List.of("1"));
+        request.setComplexity(Problem.TaskComplexity.MEDIUM);
 
         mockMvc.perform(post("/api/problems")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -84,6 +90,7 @@ class ProblemControllerTest {
         request.setName("Task");
         request.setGeneratorCode("code");
         request.setInputs(List.of());
+        request.setComplexity(Problem.TaskComplexity.MEDIUM);
 
         mockMvc.perform(post("/api/problems")
                         .contentType(MediaType.APPLICATION_JSON)
