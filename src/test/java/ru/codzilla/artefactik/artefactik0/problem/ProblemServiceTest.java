@@ -193,7 +193,7 @@ class ProblemServiceTest {
     @Transactional(readOnly = true)
     public Problem getRandomProblemByComplexityAndType(Problem.TaskComplexity complexity, String type) {
         // type пока игнорируется, используем только complexity
-        return problemRepository.findRandomByComplexity(complexity)
+        return problemRepository.findRandomByComplexity(String.valueOf(complexity))
                 .orElseThrow(() -> new RuntimeException("No problems found for complexity: " + complexity));
     }
 }
