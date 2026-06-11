@@ -13,6 +13,7 @@ import ru.codzilla.artefactik.artefactik0.repository.ProblemTestRepository;
 import ru.codzilla.artefactik.artefactik0.service.ProblemService;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -65,5 +66,28 @@ public class ProblemController {
                 .map(p -> ProblemResponse.from(p,
                         problemTestRepository.findAllByProblemIdOrderByTestIndex(p.getId()).size()))
                 .toList();
+    }
+
+
+    @GetMapping("/random")
+    public ResponseEntity<Map<String, Object>> getRandomProblem(
+            @RequestParam String type,
+            @RequestParam String complexity) {
+        // type игнорируем, но принимаем
+        Problem.TaskComplexity comp;
+        try {
+            comp = Problem.TaskComplexity.valueOf(complexity.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid complexity: " + complexity);
+        }
+        Problem problem = problemService.getRandomProblemByComplexityAndType(comp, type);
+
+        // Возвращаем только нужные поля: id, name, level
+        Map<String, Object> response = Map.of(
+                "id", problem.getId(),
+                "name", problem.getName(),
+                "level", problem.getComplexity().name()
+        );
+        return ResponseEntity.ok(response);
     }
 }

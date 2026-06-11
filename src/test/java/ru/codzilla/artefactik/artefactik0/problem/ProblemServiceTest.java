@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.annotation.Transactional;
 import ru.codzilla.artefactik.artefactik0.dto.CreateProblemRequest;
 import ru.codzilla.artefactik.artefactik0.dto.ProblemResponse;
 import ru.codzilla.artefactik.artefactik0.dto.TestCaseDTO;
@@ -187,5 +188,12 @@ class ProblemServiceTest {
         ProblemTest t = new ProblemTest();
         t.setTestIndex(index);
         return t;
+    }
+
+    @Transactional(readOnly = true)
+    public Problem getRandomProblemByComplexityAndType(Problem.TaskComplexity complexity, String type) {
+        // type пока игнорируется, используем только complexity
+        return problemRepository.findRandomByComplexity(complexity)
+                .orElseThrow(() -> new RuntimeException("No problems found for complexity: " + complexity));
     }
 }
