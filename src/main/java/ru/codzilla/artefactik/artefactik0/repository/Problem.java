@@ -23,6 +23,9 @@ public class Problem {
     @Enumerated(EnumType.STRING)
     private TaskComplexity complexity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "task_type")
+    private TaskType taskType = TaskType.ALGORITHM;
 
     @Column(nullable = false)
     private Integer memoryLimit;
@@ -46,5 +49,8 @@ public class Problem {
 
     public enum TaskComplexity {
          EASY, MEDIUM, HARD
+    }
+    public enum TaskType {
+        ALGORITHM, MATH, DATA_STRUCTURES
     }
 }

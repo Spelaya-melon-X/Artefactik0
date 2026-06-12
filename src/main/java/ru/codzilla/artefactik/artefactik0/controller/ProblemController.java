@@ -73,7 +73,6 @@ public class ProblemController {
     public ResponseEntity<Map<String, Object>> getRandomProblem(
             @RequestParam String type,
             @RequestParam String complexity) {
-        // type игнорируем, но принимаем
         Problem.TaskComplexity comp;
         try {
             comp = Problem.TaskComplexity.valueOf(complexity.toUpperCase());
@@ -82,11 +81,11 @@ public class ProblemController {
         }
         Problem problem = problemService.getRandomProblemByComplexityAndType(comp, type);
 
-        // Возвращаем только нужные поля: id, name, level
         Map<String, Object> response = Map.of(
                 "id", problem.getId(),
                 "name", problem.getName(),
-                "level", problem.getComplexity().name()
+                "level", problem.getComplexity().name(),
+                "type", problem.getTaskType().name()
         );
         return ResponseEntity.ok(response);
     }

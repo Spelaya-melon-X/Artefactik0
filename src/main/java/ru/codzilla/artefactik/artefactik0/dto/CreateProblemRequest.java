@@ -17,6 +17,7 @@ public class CreateProblemRequest {
     private Integer memoryLimit = 256;
 
     private Problem.TaskComplexity complexity;
+    private Problem.TaskType taskType ;
 
     private String statement;
 

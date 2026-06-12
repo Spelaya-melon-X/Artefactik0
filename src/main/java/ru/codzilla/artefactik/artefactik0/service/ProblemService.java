@@ -30,6 +30,9 @@ public class ProblemService {
         problem.setTimeLimit(request.getTimeLimit() != null ? request.getTimeLimit() : 1000);
         problem.setMemoryLimit(request.getMemoryLimit() != null ? request.getMemoryLimit() : 256);
         problem.setComplexity(request.getComplexity());
+        problem.setTaskType(request.getTaskType() != null
+                ? request.getTaskType()
+                : Problem.TaskType.ALGORITHM);
         Problem saved = problemRepository.save(problem);
         Long problemId = saved.getId();
 
@@ -124,8 +127,26 @@ public class ProblemService {
 
     @Transactional(readOnly = true)
     public Problem getRandomProblemByComplexityAndType(Problem.TaskComplexity complexity, String type) {
-        // type пока игнорируется, используем только complexity
-        return problemRepository.findRandomByComplexity(String.valueOf(complexity))
-                .orElseThrow(() -> new RuntimeException("No problems found for complexity: " + complexity));
+        Problem.TaskType taskType;
+        try {
+            taskType = Problem.TaskType.valueOf(type.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            taskType = Problem.TaskType.ALGORITHM;
+        }
+
+        Problem.TaskType finalTaskType = taskType;
+        return problemRepository.findRandomByTaskTypeAndComplexity(
+                        taskType.name(), complexity.name())
+                .or(() -> {
+                    log.warn("No {} problem with complexity {}, trying any complexity",
+                            finalTaskType, complexity);
+                    return problemRepository.findRandomByTaskType(finalTaskType.name());
+                })
+                .or(() -> {
+                    log.warn("No {} problems at all, falling back to any problem", finalTaskType);
+                    return problemRepository.findRandomByComplexity(complexity.name());
+                })
+                .orElseThrow(() -> new RuntimeException(
+                        "No problems found for type=" + type + " complexity=" + complexity));
     }
 }
