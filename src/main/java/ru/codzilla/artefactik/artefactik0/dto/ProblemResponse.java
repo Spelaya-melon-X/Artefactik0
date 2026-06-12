@@ -15,6 +15,8 @@ public class ProblemResponse {
     private boolean hasStatement;
     private int testCount;
     private LocalDateTime createdAt;
+    private String complexity;
+    private String taskType;
 
     public static ProblemResponse from(Problem problem, int testCount) {
         ProblemResponse r = new ProblemResponse();
@@ -23,6 +25,8 @@ public class ProblemResponse {
         r.setTimeLimit(problem.getTimeLimit());
         r.setMemoryLimit(problem.getMemoryLimit());
         r.setHasStatement(problem.getStatementKey() != null);
+        r.setComplexity(String.valueOf(problem.getComplexity()));
+        r.setTaskType(String.valueOf(problem.getTaskType()));
         r.setTestCount(testCount);
         r.setCreatedAt(problem.getCreatedAt());
         return r;

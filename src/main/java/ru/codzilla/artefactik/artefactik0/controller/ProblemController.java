@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.codzilla.artefactik.artefactik0.repository.Problem;
+import ru.codzilla.artefactik.artefactik0.repository.ProblemRepository;
 import ru.codzilla.artefactik.artefactik0.repository.ProblemTestRepository;
 import ru.codzilla.artefactik.artefactik0.service.ProblemService;
 
@@ -23,6 +24,7 @@ public class ProblemController {
 
     private final ProblemService problemService;
     private final ProblemTestRepository problemTestRepository;
+    private final ProblemRepository problemRepository;
 
 
     @PostMapping
@@ -68,6 +70,16 @@ public class ProblemController {
                 .toList();
     }
 
+    @GetMapping(params = "taskType")
+    public ResponseEntity<List<ProblemResponse>> getProblemsByTaskType(
+            @RequestParam("taskType") Problem.TaskType taskType) {
+        List<Problem> problems = problemRepository.findAllByTaskType(taskType);
+        List<ProblemResponse> result = problems.stream()
+                .map(p -> ProblemResponse.from(p,
+                        problemTestRepository.findAllByProblemIdOrderByTestIndex(p.getId()).size()))
+                .toList();
+        return ResponseEntity.ok(result);
+    }
 
     @GetMapping("/random")
     public ResponseEntity<Map<String, Object>> getRandomProblem(
