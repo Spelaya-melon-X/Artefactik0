@@ -13,6 +13,7 @@ import ru.codzilla.artefactik.artefactik0.dto.CreateProblemRequest;
 import ru.codzilla.artefactik.artefactik0.dto.ProblemResponse;
 import ru.codzilla.artefactik.artefactik0.dto.TestCaseDTO;
 import ru.codzilla.artefactik.artefactik0.repository.Problem;
+import ru.codzilla.artefactik.artefactik0.repository.ProblemRepository;
 import ru.codzilla.artefactik.artefactik0.repository.ProblemTestRepository;
 import ru.codzilla.artefactik.artefactik0.service.ProblemService;
 
@@ -31,7 +32,8 @@ class ProblemControllerTest {
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper mapper;
     @MockBean private ProblemService problemService;
-    @MockBean private ProblemTestRepository problemTestRepository;   // ← добавлен мок
+    @MockBean private ProblemTestRepository problemTestRepository;
+    @MockBean private ProblemRepository problemRepository;   // ← добавлен мок
 
     @Test
     void shouldCreateProblem() throws Exception {
@@ -39,7 +41,7 @@ class ProblemControllerTest {
         request.setName("Sum");
         request.setGeneratorCode("class Gen implements TestGenerator {...}");
         request.setInputs(List.of("1 2", "3 4"));
-        request.setComplexity(Problem.TaskComplexity.MEDIUM); // ← добавлено поле
+        request.setComplexity(Problem.TaskComplexity.MEDIUM);
 
         ProblemResponse response = new ProblemResponse();
         response.setId(1L);
