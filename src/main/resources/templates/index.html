@@ -157,7 +157,6 @@
             min-height: 180px;
         }
         .code-area::placeholder { color: #3a5080; }
-        /* Стили для таблицы задач */
         .problem-table {
             width: 100%;
             border-collapse: separate;
@@ -198,11 +197,11 @@
         <button class="tab-btn" data-tab="tests">Все тесты</button>
         <button class="tab-btn" data-tab="statement">Условие</button>
         <button class="tab-btn" data-tab="update">Обновить output</button>
-        <!-- Новая вкладка -->
         <button class="tab-btn" data-tab="complexity">По сложности</button>
+        <button class="tab-btn" data-tab="taskType">По типу</button>   <!-- Новая кнопка -->
     </div>
 
-    <!-- Вкладка "Создать задачу" (обновлённая) -->
+    <!-- Вкладка "Создать задачу" -->
     <section class="window-card visible" id="tab-create">
         <div class="card-header">📝 Новая задача</div>
         <form id="createForm">
@@ -210,11 +209,17 @@
             <input type="number" name="timeLimit" placeholder="Лимит времени (мс)" value="1000">
             <input type="number" name="memoryLimit" placeholder="Лимит памяти (МБ)" value="256">
 
-            <!-- Новое поле сложности -->
             <select name="complexity" required>
                 <option value="EASY">Лёгкая</option>
                 <option value="MEDIUM" selected>Средняя</option>
                 <option value="HARD">Сложная</option>
+            </select>
+
+            <!-- Новый выбор типа задачи -->
+            <select name="taskType" id="createTaskType" required>
+                <option value="ALGORITHM" selected>Алгоритм</option>
+                <option value="MATH">Математика</option>
+                <option value="DATA_STRUCTURES">Структуры данных</option>
             </select>
 
             <textarea name="statement" rows="4" placeholder="Условие (Markdown)"></textarea>
@@ -239,7 +244,7 @@
         </form>
     </section>
 
-    <!-- Остальные вкладки без изменений, кроме новой -->
+    <!-- Вкладка "Просмотр задачи" -->
     <section class="window-card" id="tab-view" style="display:none;">
         <div class="card-header">🔍 Информация о задаче</div>
         <input type="number" id="viewProblemId" placeholder="ID задачи" style="width:200px;">
@@ -247,6 +252,7 @@
         <div id="problemInfo" style="margin-top:16px;"></div>
     </section>
 
+    <!-- Вкладка "Все тесты" -->
     <section class="window-card" id="tab-tests" style="display:none;">
         <div class="card-header">🧪 Тесты задачи</div>
         <input type="number" id="testsProblemId" placeholder="ID задачи" style="width:200px;">
@@ -254,6 +260,7 @@
         <div id="testsContent" style="margin-top:16px;"></div>
     </section>
 
+    <!-- Вкладка "Условие" -->
     <section class="window-card" id="tab-statement" style="display:none;">
         <div class="card-header">📄 Условие (Markdown)</div>
         <input type="number" id="statementProblemId" placeholder="ID задачи" style="width:200px;">
@@ -261,6 +268,7 @@
         <div id="statementContent" style="margin-top:16px; white-space: pre-wrap;"></div>
     </section>
 
+    <!-- Вкладка "Обновить output" -->
     <section class="window-card" id="tab-update" style="display:none;">
         <div class="card-header">✏️ Обновить выходные данные теста</div>
         <input type="number" id="updateProblemId" placeholder="ID задачи" style="width:200px;">
@@ -270,7 +278,7 @@
         <div id="updateResult" style="margin-top:16px;"></div>
     </section>
 
-    <!-- НОВАЯ ВКЛАДКА "По сложности" -->
+    <!-- Вкладка "По сложности" -->
     <section class="window-card" id="tab-complexity" style="display:none;">
         <div class="card-header">🎯 Задачи по сложности</div>
         <select id="complexitySelect">
@@ -280,6 +288,18 @@
         </select>
         <button onclick="loadByComplexity()">Показать задачи</button>
         <div id="complexityList" style="margin-top:16px;"></div>
+    </section>
+
+    <!-- НОВАЯ Вкладка "По типу" -->
+    <section class="window-card" id="tab-taskType" style="display:none;">
+        <div class="card-header">📂 Задачи по типу</div>
+        <select id="taskTypeSelect">
+            <option value="ALGORITHM">Алгоритм</option>
+            <option value="MATH" selected>Математика</option>
+            <option value="DATA_STRUCTURES">Структуры данных</option>
+        </select>
+        <button onclick="loadByTaskType()">Показать задачи</button>
+        <div id="taskTypeList" style="margin-top:16px;"></div>
     </section>
 </div>
 
@@ -292,7 +312,8 @@
         tests: document.getElementById('tab-tests'),
         statement: document.getElementById('tab-statement'),
         update: document.getElementById('tab-update'),
-        complexity: document.getElementById('tab-complexity') // новая вкладка
+        complexity: document.getElementById('tab-complexity'),
+        taskType: document.getElementById('tab-taskType')     // новая вкладка
     };
     tabs.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -311,7 +332,6 @@
         });
     });
 
-    // Глобальная переменная для хранения разобранных тестов
     let parsedInputs = [];
 
     function parseInputs() {
@@ -337,7 +357,6 @@
         `;
     }
 
-    // Создание задачи с генератором (обновлено)
     document.getElementById('createForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
@@ -347,7 +366,8 @@
         const generatorCode = document.getElementById('generatorCode').value.trim();
         if (!generatorCode) { alert('Введите код генератора'); return; }
 
-        const complexity = form.complexity.value; // <-- новое поле
+        const complexity = form.complexity.value;
+        const taskType = form.taskType.value;                 // <-- читаем тип
 
         if (parsedInputs.length === 0) {
             parseInputs();
@@ -365,7 +385,8 @@
             name,
             timeLimit,
             memoryLimit,
-            complexity,     // <-- отправляем сложность
+            complexity,
+            taskType,                 // <-- отправляем тип
             statement,
             generatorCode,
             inputs: parsedInputs
@@ -386,17 +407,20 @@
                 <div style="background:var(--powder); padding:16px; border-radius:20px;">
                     ✅ Задача создана! ID: <strong>${data.id}</strong>, тестов: <strong>${data.testCount}</strong>
                 </div>`;
+
+            // Сброс полей
             document.getElementById('generatorCode').value = '';
             document.getElementById('rawInputs').value = '';
             parsedInputs = [];
             document.getElementById('testPreview').innerHTML = '<em>Нажми «Разобрать тесты» для предпросмотра</em>';
+            form.complexity.value = 'MEDIUM';
+            document.getElementById('createTaskType').value = 'ALGORITHM';   // сброс типа
         } catch (err) {
             document.getElementById('createResult').innerHTML = `
                 <div style="color:#FF5F57;">❌ ${err.message}</div>`;
         }
     });
 
-    // Просмотр одной задачи (добавим отображение сложности, если есть)
     async function loadProblem() {
         const id = document.getElementById('viewProblemId').value;
         if (!id) return;
@@ -417,7 +441,6 @@
         }
     }
 
-    // Загрузка тестов
     async function loadTests() {
         const id = document.getElementById('testsProblemId').value;
         if (!id) return;
@@ -439,7 +462,6 @@
         }
     }
 
-    // Загрузка условия
     async function loadStatement() {
         const id = document.getElementById('statementProblemId').value;
         if (!id) return;
@@ -465,7 +487,6 @@
         }
     }
 
-    // Обновление output
     async function updateOutput() {
         const problemId = document.getElementById('updateProblemId').value;
         const testIndex = document.getElementById('updateTestIndex').value;
@@ -487,7 +508,6 @@
         }
     }
 
-    // НОВАЯ ФУНКЦИЯ: загрузка списка задач по сложности
     async function loadByComplexity() {
         const complexity = document.getElementById('complexitySelect').value;
         const container = document.getElementById('complexityList');
@@ -506,6 +526,38 @@
                 html += `<tr>
                     <td>${p.id}</td>
                     <td>${escapeHtml(p.name)}</td>
+                    <td>${p.timeLimit} мс</td>
+                    <td>${p.memoryLimit} МБ</td>
+                    <td>${p.testCount || '—'}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<span style="color:#FF5F57;">Ошибка: ${err.message}</span>`;
+        }
+    }
+
+    // Новая функция для фильтрации по типу
+    async function loadByTaskType() {
+        const taskType = document.getElementById('taskTypeSelect').value;
+        const container = document.getElementById('taskTypeList');
+        container.innerHTML = '<em>Загрузка...</em>';
+        try {
+            const res = await fetch(`/api/problems?taskType=${taskType}`);
+            if (!res.ok) throw new Error('Ошибка сервера');
+            const problems = await res.json();
+            if (problems.length === 0) {
+                container.innerHTML = '<p>Нет задач с таким типом.</p>';
+                return;
+            }
+            let html = `<table class="problem-table">
+                <thead><tr><th>ID</th><th>Название</th><th>Сложность</th><th>Лимит времени</th><th>Лимит памяти</th><th>Тестов</th></tr></thead><tbody>`;
+            problems.forEach(p => {
+                html += `<tr>
+                    <td>${p.id}</td>
+                    <td>${escapeHtml(p.name)}</td>
+                    <td>${p.complexity || '—'}</td>
                     <td>${p.timeLimit} мс</td>
                     <td>${p.memoryLimit} МБ</td>
                     <td>${p.testCount || '—'}</td>
